@@ -1,0 +1,32 @@
+<form id='search' onsubmit='disableEmptyInputs(this)' action='/'>
+    <table border='0' align='center' width='85%'>
+        <tr>
+            <td align='left' width='300px'>
+                <table border='0' align='left' cellspacing='10'>
+                    <tr>
+                        <td width='90px'>Message text:</td>
+                        <td width='*'><input size='100' id='q' name='q' value="{{ q }}"></td>
+                        <td align='right'><input type='checkbox' id='sql_match' name='sql_match' {% if sql_match -%} checked {% endif -%} ></td>
+                        <td align='left'>Natural Language Query</td>
+                    </tr>
+                    <tr>
+                        <td width='90px'>Username:</td>
+                        <td width='*'><input size='100' id='username' name='username' value="{{ username }}"></td>
+                    </tr>
+                    <tr>
+                        <td width='90px'>Channel name:</td>
+                        <td width='*'><input size='100' id='channel_name' name='channel_name' value="{{ channel_name }}"></td>
+                    </tr>
+                    <tr>
+                        <td width='90px'>Team name:</td>
+                        <td width='*'><input size='100' id='team_name' name='team_name' value="{{ team_name }}"></td>
+                    </tr>
+                    <tr>
+                        <td width='90px'>&nbsp;</td>
+                        <td width='*' align='right'><input type='submit' value="Search"></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</form>
