@@ -1,0 +1,32 @@
+{% include 'header.j2' %}
+	<body>
+        {% include 'search.j2' %}
+        {% if messages %}
+		<table id="striped" align='center' width='85%' border='0' cellpadding='5'>
+            <tr>
+                <th>Team Name</th>
+                <th>Channel Name</th>
+                <th>Username</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Text</th>
+                <th>&nbsp;</th>
+            </tr>
+            {% for message in messages -%}
+            <tr>
+                <td>{{ message["team_name"] }}</td>
+                <td>{{ message["channel_name"] }}</td>
+                <td>{{ message["username"] }}</td>
+                <td>{{ message["date"] }}</td>
+                <td>{{ message["time"] }}</td>
+                <td class='wrappable'>{{ message["text"] }}</td>
+                <td><a href='/context/{{ message["id"] }}/{{ q }}'>See in context</a></td>
+            </tr>
+            {% endfor -%}
+            <tr>
+                <td bgcolor='#ffffff' colspan='5'>Found {{ messages|length }} results</td>
+            </tr>
+        </table>
+        {% endif %}
+	</body>
+{% include 'footer.j2' %}

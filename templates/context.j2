@@ -1,0 +1,67 @@
+{% include 'header.j2' -%}
+	<body>
+        {% include 'search.j2' -%}
+        {% if messages -%}
+        <table align='center' width='85%' border='0' cellpadding='10'>
+            <tr>
+                <td width='115px'><b>Team:</b> {{ messages[0]["team_name"] }}</td>
+                <td align='left'><b>Channel:</b> {{ messages[0]["channel_name"] }}</td>
+                <td width='80px' align='right'><a href='/context/{{ message_id }}/{{ q }}/{{ offset | int - 20 }}'>&lt;&lt; Back 20</a></td>
+                <td width='80px' align='right'><a href='/context/{{ message_id }}/{{ q }}/{{ offset | int - 1 }}'>&lt; Back 1</a></td>
+                <td width='80px' align='right'><a href='/context/{{ message_id }}/{{ q }}/{{ offset | int + 1 }}'>Forward 1 &gt;</a></td>
+                <td width='80px' align='right'><a href='/context/{{ message_id }}/{{ q }}/{{ offset | int + 20 }}'>Forward 20 &gt;&gt;</a></td>
+            </tr>
+        </table>
+		<table id="striped" align='center' width='85%' border='0' cellspacing='0' cellpadding='5'>
+            {% for message in messages -%}
+                {% if message["display_user"] -%}
+                <tr>
+                    <td rowspan='2' valign='top' width='55px' align='center'><img height='50px' src='{{ message["avatar_url"] }}' /></td>
+                    <td valign='top'><b>{{ message["full_name"] }}</b> <font color='#666666' size='-1'><i>{{ message["time"] }}</i> {% if message["display_date"] -%}{{ message["date"] }}{% endif -%}</font></td>
+                </tr>
+                <tr>
+                    <td class='wrappable'>{{ message["text"] }}</td>
+                </tr>
+                {% else -%}
+                <tr>
+                    <td><font size='-1' color='#bbbbbb'><i>{{ message["time"] }}</i></font></td>
+                    <td class='wrappable'>{{ message["text"] }}</td>
+                </tr>
+                {% endif -%}
+                {% if message.files is defined -%}
+                    <tr>
+                    {% for file in message["files"] -%}
+                        <td>&nbsp;</td>
+                        <td><a href='{{ file["url"] }}'><img src='{{ file["thumb"] }}' /></a></td>
+                    {% endfor -%}
+                    </tr>
+                {% endif -%}
+            </tr>
+            {% endfor -%}
+            <tr>
+                <td bgcolor='#ffffff' colspan='5'>Found {{ messages|length }} results</td>
+            </tr>
+        </table>
+        <table align='center' width='85%' border='0' cellpadding='10'>
+            <tr>
+                <td width='115px'><b>Team:</b> {{ messages[0]["team_name"] }}</td>
+                <td align='left'><b>Channel:</b> {{ messages[0]["channel_name"] }}</td>
+                <td width='80px' align='right'><a href='/context/{{ message_id }}/{{ q }}/{{ offset | int - 20 }}'>&lt;&lt; Back 20</a></td>
+                <td width='80px' align='right'><a href='/context/{{ message_id }}/{{ q }}/{{ offset | int - 1 }}'>&lt; Back 1</a></td>
+                <td width='80px' align='right'><a href='/context/{{ message_id }}/{{ q }}/{{ offset | int + 1 }}'>Forward 1 &gt;</a></td>
+                <td width='80px' align='right'><a href='/context/{{ message_id }}/{{ q }}/{{ offset | int + 20 }}'>Forward 20 &gt;&gt;</a></td>
+            </tr>
+        </table>
+        {% endif -%}
+        {% if errors -%}
+        <table border='0' width='85%' align='center'>
+            {% for error in errors -%}
+                <tr><td>{{ error }}</td></tr>
+            {% endfor -%}
+        </table>
+        {% endif -%}
+        <table border='0' align='center' width='85%'>
+            <tr><td><a href='/?q={{ q }}'>Back to search</a></td></tr>
+        </table>
+	</body>
+{% include 'footer.j2' -%}
