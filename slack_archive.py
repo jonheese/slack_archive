@@ -255,7 +255,11 @@ def search():
         else:
             show_prev = False
             show_next = False
-        message_range = "%s - %s" % (offset+1, min(offset+results_per_page, total_count))
+        if total_count == 0:
+            range_start = 0
+        else:
+            range_start = offset + 1
+        message_range = "%s - %s" % (range_start, min(offset+results_per_page, total_count))
         return render_template("results.j2",
                                q=q,
                                team_name=team_name,
