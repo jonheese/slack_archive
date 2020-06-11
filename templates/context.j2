@@ -12,11 +12,11 @@
                 <td width='80px' align='right'><a href='/context/{{ message_id }}/{{ q }}/{{ offset | int + 20 }}'>Forward 20 &gt;&gt;</a></td>
             </tr>
         </table>
-		<table id="striped" align='center' width='85%' border='0' cellspacing='0' cellpadding='5'>
+		<table id="striped" align='center' width='85%' border='0' cellspacing='0' cellpadding='4'>
             {% for message in messages -%}
                 {% if message["display_user"] -%}
                 <tr>
-                    <td rowspan='2' valign='top' width='55px' align='center'><img height='50px' src='{{ message["avatar_url"] }}' /></td>
+                    <td rowspan='2' valign='top' align='right' width='55px' align='center'><img height='46px' src='{{ message["avatar_url"] }}' /></td>
                     <td valign='top'><b>{{ message["full_name"] }}</b> <font color='#666666' size='-1'><i>{{ message["time"] }}</i> {% if message["display_date"] -%}{{ message["date"] }}{% endif -%}</font></td>
                 </tr>
                 <tr>
@@ -24,7 +24,7 @@
                 </tr>
                 {% else -%}
                 <tr>
-                    <td><font size='-1' color='#bbbbbb'><i>{{ message["time"] }}</i></font></td>
+                    <td align='right' valign='middle'><font size='-2' color='#bbbbbb'><i>{{ message["time"] }}</i></font></td>
                     <td class='wrappable'>{{ message["text"] }}</td>
                 </tr>
                 {% endif -%}

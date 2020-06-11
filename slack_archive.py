@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import emoji
+import json
 import math
 import mysql.connector
 import re
@@ -186,9 +187,21 @@ def package_messages(messages, q):
             record["username"] = "Unknown (%s)" % message[9]
         if not record['full_name']:
             record['full_name'] = "Unknown (%s)" % record['username']
-        record['avatar_url'] = message[11]
+        if message[11]:
+            record['avatar_url'] = message[11]
+        else:
+            record['avatar_url'] = "https://cdn1.iconfinder.com/data/icons/the-basics/100/link-broken-chain-512.png"
         records.append(record)
     return records
+
+
+def query_context_messages(channel_id, timestamp, direction, comparison, limit, offset):
+    query = "select m.team_id, m.channel_id, t.team_name, u.username, m.timestamp, m.text, m.id, c.channel_name, c.slack_channel_id, u.slack_user_id, u.full_name, u.avatar_url from " + \
+            "tbl_messages m join tbl_users u on u.id = m.user_id join tbl_channels c on c.id = m.channel_id " + \
+            "join tbl_teams t on t.id = m.team_id where m.channel_id = %s and timestamp " + comparison + " %s order by timestamp " + direction + " limit " + \
+            str(abs(offset)) + ", " + str(limit)
+    print(query)
+    return do_select(query, (channel_id, timestamp))
 
 
 @app.route('/', methods=['GET'])
@@ -225,21 +238,44 @@ def search():
                 where_columns.append(" m.text LIKE '%%%s%%' ")
             where_values.append(q)
         if not where_columns:
-            return render_template("results.j2", q="Error: You must provide some search criteria", messages=[])
+            return render_template("results.j2", messages=[])
         where_clause = " WHERE " + " AND ".join(where_columns)
         limit_clause = " LIMIT %s, %s" % (offset, results_per_page)
+        count_query = "select count(m.id) from " + \
+                "tbl_messages m join tbl_users u on u.id = m.user_id join tbl_channels c on c.id = m.channel_id " + \
+                "join tbl_teams t on t.id = m.team_id " + where_clause
+        total_count = int(do_select(count_query, tuple(where_values))[0][0])
         query = "select m.team_id, m.channel_id, t.team_name, u.username, m.timestamp, m.text, m.id, c.channel_name, c.slack_channel_id, u.slack_user_id, u.full_name, u.avatar_url from " + \
                 "tbl_messages m join tbl_users u on u.id = m.user_id join tbl_channels c on c.id = m.channel_id " + \
                 "join tbl_teams t on t.id = m.team_id " + where_clause + " order by timestamp " + limit_clause
         messages = package_messages(do_select(query, tuple(where_values)), q)
-        return render_template("results.j2", q=q, team_name=team_name, channel_name=channel_name, username=username, sql_match=sql_match, messages=messages)
+        if total_count > results_per_page:
+            show_prev = page != 1
+            show_next = page * results_per_page < total_count
+        else:
+            show_prev = False
+            show_next = False
+        message_range = "%s - %s" % (offset+1, min(offset+results_per_page, total_count))
+        return render_template("results.j2",
+                               q=q,
+                               team_name=team_name,
+                               channel_name=channel_name,
+                               username=username,
+                               sql_match=sql_match,
+                               show_prev=show_prev,
+                               show_next=show_next,
+                               page=page,
+                               message_range=message_range,
+                               total_count=total_count,
+                               messages=messages)
     except Error as e:
         return render_template("results.j2", q="Failed to connect to db: %s" % e)
 
 
-@app.route('/context/<message_id>/<q>/<offset>', methods=['GET'])
 @app.route('/context/<message_id>/', methods=['GET'])
 @app.route('/context/<message_id>/<q>', methods=['GET'])
+@app.route('/context/<message_id>/<q>/', methods=['GET'])
+@app.route('/context/<message_id>/<q>/<offset>', methods=['GET'])
 def context(message_id, q="", offset=0):
     try:
         query = "select team_id, channel_id, timestamp from tbl_messages where id = %s"
@@ -252,28 +288,18 @@ def context(message_id, q="", offset=0):
             offset = int(offset)
         except ValueError:
             offset = 0
-        before_limit = int(math.floor(window_size / 2)) - offset
+        half_window = int(math.floor(window_size / 2))
+        sql_offset = max(abs(offset) - half_window, 0)
+        before_limit = min(half_window - offset, window_size)
         if before_limit > 0:
-            query = "select m.team_id, m.channel_id, t.team_name, u.username, m.timestamp, m.text, m.id, c.channel_name, c.slack_channel_id, u.slack_user_id, u.full_name, u.avatar_url from " + \
-                    "tbl_messages m join tbl_users u on u.id = m.user_id join tbl_channels c on c.id = m.channel_id " + \
-                    "join tbl_teams t on t.id = m.team_id where m.channel_id = %s and timestamp <= %s order by timestamp desc limit " + \
-                    str(before_limit)
-            messages = package_messages(do_select(query, (channel_id, timestamp)), q)
+            messages = package_messages(query_context_messages(channel_id, timestamp, "desc", "<=", before_limit, sql_offset), q)
             messages.reverse()
-            after_trim = 0
         else:
             messages = []
-            after_trim = 0 - before_limit
-        after_limit = int(math.ceil(window_size / 2)) + int(offset)
+        after_limit = min(half_window + offset, window_size)
         if after_limit > 0:
-            query = "select m.team_id, m.channel_id, t.team_name, u.username, m.timestamp, m.text, m.id, c.channel_name, c.slack_channel_id, u.slack_user_id, u.full_name, u.avatar_url from " + \
-                    "tbl_messages m join tbl_users u on u.id = m.user_id join tbl_channels c on c.id = m.channel_id " + \
-                    "join tbl_teams t on t.id = m.team_id where m.channel_id = %s and timestamp > %s order by timestamp limit " + \
-                    str(after_limit)
-            messages.extend(package_messages(do_select(query, (channel_id, timestamp)), q))
-            messages = messages[after_trim:]
-        else:
-            messages = messages[:after_limit]
+            after_messages = package_messages(query_context_messages(channel_id, timestamp, "asc", ">", after_limit, sql_offset), q)
+            messages.extend(after_messages)
         username = ""
         color = "#ffffff"
         date = None

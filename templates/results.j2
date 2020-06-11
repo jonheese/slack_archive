@@ -2,6 +2,16 @@
 	<body>
         {% include 'search.j2' %}
         {% if messages %}
+        <table align='center' width='85%' border='0' cellpadding='10'>
+            <tr>
+                <td bgcolor='#ffffff'>Showing {{ message_range }} of {{ total_count }} results</td>
+            </tr>
+            <tr>
+                {% if show_prev -%}<td width='80px' align='left'><a href='/?q={{ q }}&page={{ page - 1 }}'>&lt Prev Page</a></td>{% endif -%}
+                <td width='*'>&nbsp;</td>
+                {% if show_next -%}<td width='80px' align='right'><a href='/?q={{ q }}&page={{ page + 1 }}'>Next Page &gt;</a></td>{% endif -%}
+            </tr>
+        </table>
 		<table id="striped" align='center' width='85%' border='0' cellpadding='5'>
             <tr>
                 <th>Team Name</th>
@@ -23,8 +33,15 @@
                 <td><a href='/context/{{ message["id"] }}/{{ q }}'>See in context</a></td>
             </tr>
             {% endfor -%}
+        </table>
+        <table align='center' width='85%' border='0' cellpadding='10'>
             <tr>
-                <td bgcolor='#ffffff' colspan='5'>Found {{ messages|length }} results</td>
+                <td bgcolor='#ffffff'>Showing {{ message_range }} of {{ total_count }} results</td>
+            </tr>
+            <tr>
+                {% if show_prev -%}<td width='80px' align='left'><a href='/?q={{ q }}&page={{ page - 1 }}'>&lt Prev Page</a></td>{% endif -%}
+                <td width='*'>&nbsp;</td>
+                {% if show_next -%}<td width='80px' align='right'><a href='/?q={{ q }}&page={{ page + 1 }}'>Next Page &gt;</a></td>{% endif -%}
             </tr>
         </table>
         {% endif %}
