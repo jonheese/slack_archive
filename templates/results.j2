@@ -1,6 +1,6 @@
 {% include 'header.j2' %}
-	<body>
         {% include 'search.j2' %}
+        {% if message_range and total_count -%}
         <table align='center' width='85%' border='0' cellpadding='10'>
             <tr>
                 <td bgcolor='#ffffff'>Showing {{ message_range }} of {{ total_count }} results</td>
@@ -43,5 +43,5 @@
                 {% if show_next -%}<td width='80px' align='right'><a href='/?q={{ q }}&page={{ page + 1 }}'>Next Page &gt;</a></td>{% endif -%}
             </tr>
         </table>
-	</body>
+        {% endif -%}
 {% include 'footer.j2' %}
