@@ -24,7 +24,7 @@
                 </tr>
                 {% else -%}
                 <tr>
-                    <td align='right' valign='middle'><font size='-2' color='#bbbbbb'><i>{{ message["time"] }}</i></font></td>
+                    <td align='right' valign='middle'><div class='hidden'><font size='-2' color='#666666'><i>{{ message["time"] }}</i></font></div></td>
                     <td class='wrappable'>{{ message["text"] }}</td>
                 </tr>
                 {% endif -%}
