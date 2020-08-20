@@ -260,6 +260,13 @@ def search():
         else:
             range_start = offset + 1
         message_range = "%s - %s" % (range_start, min(offset+results_per_page, total_count))
+        param_string = []
+        for param_name in request.args.keys():
+            if param_name != "page":
+                param_string.append("%s=%s" % (param_name, request.args[param_name]))
+        param_string = "&".join(param_string)
+        prev_page_url = "/?%s&page=%s" % (param_string, page-1)
+        next_page_url = "/?%s&page=%s" % (param_string, page+1)
         return render_template("results.j2",
                                q=q,
                                team_name=team_name,
@@ -268,6 +275,8 @@ def search():
                                sql_match=sql_match,
                                show_prev=show_prev,
                                show_next=show_next,
+                               prev_page_url=prev_page_url,
+                               next_page_url=next_page_url,
                                page=page,
                                message_range=message_range,
                                total_count=total_count,
