@@ -38,9 +38,9 @@
                 <td bgcolor='#ffffff'>Showing {{ message_range }} of {{ total_count }} results</td>
             </tr>
             <tr>
-                {% if show_prev -%}<td width='80px' align='left'><a href='/?q={{ q }}&page={{ page - 1 }}'>&lt Prev Page</a></td>{% endif -%}
+                {% if show_prev -%}<td width='80px' align='left'><a href='{{ prev_page_url }}'>&lt Prev Page</a></td>{% endif -%}
                 <td width='*'>&nbsp;</td>
-                {% if show_next -%}<td width='80px' align='right'><a href='/?q={{ q }}&page={{ page + 1 }}'>Next Page &gt;</a></td>{% endif -%}
+                {% if show_next -%}<td width='80px' align='right'><a href='{{ next_page_url }}'>Next Page &gt;</a></td>{% endif -%}
             </tr>
         </table>
         {% endif -%}
