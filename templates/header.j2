@@ -5,10 +5,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<meta charset="utf-8"/>
-		<meta property="og:type" content="website" />
-		<meta property="og:url" content="http://slack-archive.istolethis.com" />
-		<meta property="og:title" content="Slack Archive" />
-		<meta property="og:description" content="Search slack-archive" />
+        {% if summary -%}
+		    <meta name="twitter:label1" content="{{ summary }}" />
+        {% endif -%}
+        {% if urlpath -%}
+		    <meta name="twitter:data1" content="http://slack-archive.istolethis.com{{ urlpath }}" />
+        {% endif -%}
 		<title>Slack Archive</title>
         <script lang='JavaScript'>
             function disableEmptyInputs(form) {

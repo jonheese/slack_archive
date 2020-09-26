@@ -291,11 +291,13 @@ def search():
 @app.route('/context/<message_id>/<q>/<offset>', methods=['GET'])
 def context(message_id, q="", offset=0):
     try:
-        query = "select team_id, channel_id, timestamp from tbl_messages where id = %s"
+        query = "select m.team_id, m.channel_id, m.timestamp, m.text, u.full_name from tbl_messages m join tbl_users u on u.id = m.user_id where m.id = %s"
         messages = do_select(query, message_id)
         team_id = messages[0][0]
         channel_id = messages[0][1]
         timestamp = messages[0][2]
+        datetime_string = datetime.fromtimestamp(timestamp).strftime('%I:%M %p %Y-%m-%d (%a)')
+        summary = "%s (%s): %s" % (messages[0][4], datetime_string, messages[0][3])
         window_size = 20
         try:
             offset = int(offset)
@@ -330,6 +332,6 @@ def context(message_id, q="", offset=0):
             date = message["date"]
             color = message["color"]
             username = message["username"]
-        return render_template("context.j2", messages=messages, q=q, offset=offset, message_id=message_id)
+        return render_template("context.j2", messages=messages, q=q, offset=offset, message_id=message_id, summary=summary, urlpath=request.path)
     except Error as e:
         return render_template("context.j2", errors=["Database query error: %s" % e], messages=None, q=q, offset=offset, message_id=message_id)
