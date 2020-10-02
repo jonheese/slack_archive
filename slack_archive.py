@@ -210,6 +210,8 @@ def search():
     username = request.args.get("username", "")
     team_name = request.args.get("team_name", "")
     channel_name = request.args.get("channel_name", "")
+    start_date = request.args.get("start_date", "")
+    end_date = request.args.get("end_date", "")
     sql_match = request.args.get("sql_match", False)
     page = int(request.args.get("page", 1))
     results_per_page = int(request.args.get("rpp", 20))
@@ -231,6 +233,12 @@ def search():
             where_columns.append(" (c.channel_name LIKE '%%%s%%' OR c.slack_channel_id LIKE '%%%s%%') ")
             where_values.append(channel_name)
             where_values.append(channel_name)
+        if start_date:
+            where_columns.append(" m.timestamp > %s ")
+            where_values.append(datetime.strptime(start_date, "%Y-%m-%d").strftime("%s"))
+        if end_date:
+            where_columns.append(" m.timestamp < %s ")
+            where_values.append(datetime.strptime(end_date, "%Y-%m-%d").strftime("%s"))
         if q:
             if sql_match:
                 where_columns.append(" match(m.text) AGAINST('%s') ")
@@ -272,6 +280,8 @@ def search():
                                team_name=team_name,
                                channel_name=channel_name,
                                username=username,
+                               start_date=start_date,
+                               end_date=end_date,
                                sql_match=sql_match,
                                show_prev=show_prev,
                                show_next=show_next,
@@ -282,7 +292,7 @@ def search():
                                total_count=total_count,
                                messages=messages)
     except Error as e:
-        return render_template("results.j2", q="Failed to connect to db: %s" % e)
+        return render_template("results.j2", q="Exception encountered: %s" % e)
 
 
 @app.route('/context/<message_id>/', methods=['GET'])
