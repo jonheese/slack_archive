@@ -3,7 +3,7 @@
         {% if message_range and total_count -%}
         <table align='center' width='85%' border='0' cellpadding='10'>
             <tr>
-                <td bgcolor='#ffffff'>Showing {{ message_range }} of {{ total_count }} results</td>
+                <td>Showing {{ message_range }} of {{ total_count }} results</td>
             </tr>
             <tr>
                 {% if show_prev -%}<td width='80px' align='left'><a href='{{ prev_page_url }}'>&lt Prev Page</a></td>{% endif -%}
@@ -29,13 +29,24 @@
                 <td>{{ message["date"] }}</td>
                 <td>{{ message["time"] }}</td>
                 <td class='wrappable'>{{ message["text"] }}</td>
-                <td><a href='/context/{{ message["id"] }}/{{ q }}'>See in context</a></td>
+                <td><form method='post' action='/context/{{ message["id"] }}' class='inline'>
+                     <input type='hidden' name='q' value='{{ q }}'>
+                     <input type='hidden' name='username' value='{{ username }}'>
+                     <input type='hidden' name='channel_name' value='{{ channel_name }}'>
+                     <input type='hidden' name='team_name' value='{{ team_name }}'>
+                     <input type='hidden' name='start_date' value='{{ start_date }}'>
+                     <input type='hidden' name='end_date' value='{{ end_date }}'>
+                     <input type='hidden' name='sql_match' value='{{ sql_match }}'>
+                     <button type="submit" name="see_in_context" value="see_in_context" class="link-button">
+                        See in context
+                     </button>
+                </form></td>
             </tr>
             {% endfor -%}
         </table>
         <table align='center' width='85%' border='0' cellpadding='10'>
             <tr>
-                <td bgcolor='#ffffff'>Showing {{ message_range }} of {{ total_count }} results</td>
+                <td>Showing {{ message_range }} of {{ total_count }} results</td>
             </tr>
             <tr>
                 {% if show_prev -%}<td width='80px' align='left'><a href='{{ prev_page_url }}'>&lt Prev Page</a></td>{% endif -%}

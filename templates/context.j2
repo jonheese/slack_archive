@@ -6,13 +6,49 @@
             <tr>
                 <td width='115px'><b>Team:</b> {{ messages[0]["team_name"] }}</td>
                 <td align='left'><b>Channel:</b> {{ messages[0]["channel_name"] }}</td>
-                <td width='80px' align='right'><a href='/context/{{ message_id }}/{{ q }}/{{ offset | int - 20 }}'>&lt;&lt; Back 20</a></td>
-                <td width='80px' align='right'><a href='/context/{{ message_id }}/{{ q }}/{{ offset | int - 1 }}'>&lt; Back 1</a></td>
-                <td width='80px' align='right'><a href='/context/{{ message_id }}/{{ q }}/{{ offset | int + 1 }}'>Forward 1 &gt;</a></td>
-                <td width='80px' align='right'><a href='/context/{{ message_id }}/{{ q }}/{{ offset | int + 20 }}'>Forward 20 &gt;&gt;</a></td>
+                <td width='80px' align='right'><form method='post' action='{{ prev20_url }}' class='inline'>
+                     <input type='hidden' name='q' value='{{ q }}'>
+                     <input type='hidden' name='username' value='{{ username }}'>
+                     <input type='hidden' name='channel_name' value='{{ channel_name }}'>
+                     <input type='hidden' name='team_name' value='{{ team_name }}'>
+                     <input type='hidden' name='start_date' value='{{ start_date }}'>
+                     <input type='hidden' name='end_date' value='{{ end_date }}'>
+                     <input type='hidden' name='sql_match' value='{{ sql_match }}'>
+                     <button type="submit" name="see_in_context" value="see_in_context" class="link-button">&lt;&lt; Back 20</button>
+                </form></td>
+                <td width='80px' align='right'><form method='post' action='{{ prev_url }}' class='inline'>
+                     <input type='hidden' name='q' value='{{ q }}'>
+                     <input type='hidden' name='username' value='{{ username }}'>
+                     <input type='hidden' name='channel_name' value='{{ channel_name }}'>
+                     <input type='hidden' name='team_name' value='{{ team_name }}'>
+                     <input type='hidden' name='start_date' value='{{ start_date }}'>
+                     <input type='hidden' name='end_date' value='{{ end_date }}'>
+                     <input type='hidden' name='sql_match' value='{{ sql_match }}'>
+                     <button type="submit" name="see_in_context" value="see_in_context" class="link-button">&lt; Back 1</button>
+                </form></td>
+                <td width='80px' align='right'><form method='post' action='{{ next_url }}' class='inline'>
+                     <input type='hidden' name='q' value='{{ q }}'>
+                     <input type='hidden' name='username' value='{{ username }}'>
+                     <input type='hidden' name='channel_name' value='{{ channel_name }}'>
+                     <input type='hidden' name='team_name' value='{{ team_name }}'>
+                     <input type='hidden' name='start_date' value='{{ start_date }}'>
+                     <input type='hidden' name='end_date' value='{{ end_date }}'>
+                     <input type='hidden' name='sql_match' value='{{ sql_match }}'>
+                     <button type="submit" name="see_in_context" value="see_in_context" class="link-button">Forward 1 &gt;</button>
+                </form></td>
+                <td width='80px' align='right'><form method='post' action='{{ next20_url }}' class='inline'>
+                     <input type='hidden' name='q' value='{{ q }}'>
+                     <input type='hidden' name='username' value='{{ username }}'>
+                     <input type='hidden' name='channel_name' value='{{ channel_name }}'>
+                     <input type='hidden' name='team_name' value='{{ team_name }}'>
+                     <input type='hidden' name='start_date' value='{{ start_date }}'>
+                     <input type='hidden' name='end_date' value='{{ end_date }}'>
+                     <input type='hidden' name='sql_match' value='{{ sql_match }}'>
+                     <button type="submit" name="see_in_context" value="see_in_context" class="link-button">Forward 20 &gt;&gt;</button>
+                </form></td>
             </tr>
         </table>
-		<table id="striped" align='center' width='85%' border='0' cellspacing='0' cellpadding='4'>
+		<table align='center' width='85%' border='0' cellspacing='0' cellpadding='4'>
             {% for message in messages -%}
                 {% if message["display_user"] -%}
                 <tr>
@@ -39,17 +75,53 @@
             </tr>
             {% endfor -%}
             <tr>
-                <td bgcolor='#ffffff' colspan='5'>Found {{ messages|length }} results</td>
+                <td colspan='5'>Found {{ messages|length }} results</td>
             </tr>
         </table>
         <table align='center' width='85%' border='0' cellpadding='10'>
             <tr>
                 <td width='115px'><b>Team:</b> {{ messages[0]["team_name"] }}</td>
                 <td align='left'><b>Channel:</b> {{ messages[0]["channel_name"] }}</td>
-                <td width='80px' align='right'><a href='/context/{{ message_id }}/{{ q }}/{{ offset | int - 20 }}'>&lt;&lt; Back 20</a></td>
-                <td width='80px' align='right'><a href='/context/{{ message_id }}/{{ q }}/{{ offset | int - 1 }}'>&lt; Back 1</a></td>
-                <td width='80px' align='right'><a href='/context/{{ message_id }}/{{ q }}/{{ offset | int + 1 }}'>Forward 1 &gt;</a></td>
-                <td width='80px' align='right'><a href='/context/{{ message_id }}/{{ q }}/{{ offset | int + 20 }}'>Forward 20 &gt;&gt;</a></td>
+                <td width='80px' align='right'><form method='post' action='{{ prev20_url }}' class='inline'>
+                     <input type='hidden' name='q' value='{{ q }}'>
+                     <input type='hidden' name='username' value='{{ username }}'>
+                     <input type='hidden' name='channel_name' value='{{ channel_name }}'>
+                     <input type='hidden' name='team_name' value='{{ team_name }}'>
+                     <input type='hidden' name='start_date' value='{{ start_date }}'>
+                     <input type='hidden' name='end_date' value='{{ end_date }}'>
+                     <input type='hidden' name='sql_match' value='{{ sql_match }}'>
+                     <button type="submit" name="see_in_context" value="see_in_context" class="link-button">&lt;&lt; Back 20</button>
+                </form></td>
+                <td width='80px' align='right'><form method='post' action='{{ prev_url }}' class='inline'>
+                     <input type='hidden' name='q' value='{{ q }}'>
+                     <input type='hidden' name='username' value='{{ username }}'>
+                     <input type='hidden' name='channel_name' value='{{ channel_name }}'>
+                     <input type='hidden' name='team_name' value='{{ team_name }}'>
+                     <input type='hidden' name='start_date' value='{{ start_date }}'>
+                     <input type='hidden' name='end_date' value='{{ end_date }}'>
+                     <input type='hidden' name='sql_match' value='{{ sql_match }}'>
+                     <button type="submit" name="see_in_context" value="see_in_context" class="link-button">&lt; Back 1</button>
+                </form></td>
+                <td width='80px' align='right'><form method='post' action='{{ next_url }}' class='inline'>
+                     <input type='hidden' name='q' value='{{ q }}'>
+                     <input type='hidden' name='username' value='{{ username }}'>
+                     <input type='hidden' name='channel_name' value='{{ channel_name }}'>
+                     <input type='hidden' name='team_name' value='{{ team_name }}'>
+                     <input type='hidden' name='start_date' value='{{ start_date }}'>
+                     <input type='hidden' name='end_date' value='{{ end_date }}'>
+                     <input type='hidden' name='sql_match' value='{{ sql_match }}'>
+                     <button type="submit" name="see_in_context" value="see_in_context" class="link-button">Forward 1 &gt;</button>
+                </form></td>
+                <td width='80px' align='right'><form method='post' action='{{ next20_url }}' class='inline'>
+                     <input type='hidden' name='q' value='{{ q }}'>
+                     <input type='hidden' name='username' value='{{ username }}'>
+                     <input type='hidden' name='channel_name' value='{{ channel_name }}'>
+                     <input type='hidden' name='team_name' value='{{ team_name }}'>
+                     <input type='hidden' name='start_date' value='{{ start_date }}'>
+                     <input type='hidden' name='end_date' value='{{ end_date }}'>
+                     <input type='hidden' name='sql_match' value='{{ sql_match }}'>
+                     <button type="submit" name="see_in_context" value="see_in_context" class="link-button">Forward 20 &gt;&gt;</button>
+                </form></td>
             </tr>
         </table>
         {% endif -%}
