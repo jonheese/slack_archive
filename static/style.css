@@ -31,6 +31,10 @@ h1 {
     margin-bottom: 0;
 }
 
+.bordered {
+    border: 5px solid gray;
+}
+
 .wrappable {
     white-space: normal;
 }
