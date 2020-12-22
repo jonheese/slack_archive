@@ -214,6 +214,7 @@ def package_messages(messages, q):
             "channel_name": message[7],
             "full_name": message[10],
             "files": get_files(message[6]),
+            "archive_url": message[12],
         }
         if not record["channel_name"]:
             record["channel_name"] = f"Unknown ({message[8]})"
@@ -231,7 +232,7 @@ def package_messages(messages, q):
 
 def query_context_messages(channel_id, timestamp, direction, comparison, limit, offset):
     query = "select m.team_id, m.channel_id, t.team_name, u.username, m.timestamp, m.text, m.id, " + \
-            "c.channel_name, c.slack_channel_id, u.slack_user_id, u.full_name, u.avatar_url from " + \
+            "c.channel_name, c.slack_channel_id, u.slack_user_id, u.full_name, u.avatar_url, m.archive_url from " + \
             "tbl_messages m join tbl_users u on u.id = m.user_id join tbl_channels c on c.id = m.channel_id " + \
             "join tbl_teams t on t.id = m.team_id where m.channel_id = %s and timestamp " + comparison + \
             " %s order by timestamp " + direction + " limit " + str(abs(offset)) + ", " + str(limit)

@@ -56,12 +56,18 @@
                     <td valign='top'><b>{{ message["full_name"] }}</b> <font color='#666666' size='-1'><i>{{ message["time"] }}</i> {% if message["display_date"] -%}{{ message["date"] }}{% endif -%}</font></td>
                 </tr>
                 <tr>
-                    <td class='wrappable'>{{ message["text"] }}</td>
+                    <td width='*' class='wrappable'>{{ message["text"] }}</td>
+                    {% if message["archive_url"] -%}
+                    <td width='50'><a href='{{ message["archive_url"] }}'>Archive URL</a></td>
+                    {% endif -%}
                 </tr>
                 {% else -%}
                 <tr>
                     <td align='right' valign='middle'><div class='hidden'><font size='-2' color='#666666'><i>{{ message["time"] }}</i></font></div></td>
-                    <td class='wrappable'>{{ message["text"] }}</td>
+                    <td width='*' class='wrappable'>{{ message["text"] }}</td>
+                    {% if message["archive_url"] -%}
+                    <td width='50'><a href='{{ message["archive_url"] }}'>Archive URL</a></td>
+                    {% endif -%}
                 </tr>
                 {% endif -%}
                 {% if message.files is defined -%}
