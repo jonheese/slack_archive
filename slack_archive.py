@@ -214,8 +214,10 @@ def package_messages(messages, q):
             "channel_name": message[7],
             "full_name": message[10],
             "files": get_files(message[6]),
-            "archive_url": message[12],
+            "archive_url": None,
         }
+        if len(message) >= 13:
+            record["archive_url"] = message[12]
         if not record["channel_name"]:
             record["channel_name"] = f"Unknown ({message[8]})"
         if not record["username"]:
