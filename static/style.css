@@ -79,3 +79,40 @@ tr:hover .hidden {
 .link-button:active {
   color:red;
 }
+
+.table-rounded-corner {
+  margin: 10px;
+  border-collapse: separate;
+}
+
+.td-rounded-corner {
+  background-clip: padding-box;
+  background-color: #333333;
+  border-left: 8px solid #333333;
+  border-right: 8px solid #333333;
+  border-top: 4px solid #333333;
+  border-bottom: 1px solid #333333;
+  border-radius: 10px;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  background-color: #222222;
+  color: #fff;
+  text-align: center;
+  padding: 10px;
+  top: 100%;
+  left: 65%;
+  border-radius: 6px;
+  position: absolute;
+  z-index: 1;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}

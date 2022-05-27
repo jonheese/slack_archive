@@ -70,6 +70,25 @@
                     {% endif -%}
                 </tr>
                 {% endif -%}
+                {% if message.reactions|length > 0 -%}
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td>
+                            <table align='left' border='0' class='table-rounder-corner'>
+                                <tr>
+                                    {% for reaction in message["reactions"] -%}
+                                        <td class='td-rounded-corner'>
+                                            <div class='tooltip'>
+                                                <img height='15px' width='15px' src='{{ reaction[1] }}' />
+                                                <span class='tooltiptext'><b>{{ reaction[2] }}</b> reacted with <b>:{{ reaction[0] }}:</b></span>
+                                            </div>
+                                        </td>
+                                    {% endfor -%}
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                {% endif -%}
                 {% if message.files is defined -%}
                     <tr>
                     {% for file in message["files"] -%}

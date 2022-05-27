@@ -144,7 +144,7 @@ def format_full_blockquote(text):
     return header + quote
 
 
-def format_user_mentions_and_emojis(text):
+def format_user_mentions(text):
     query = "select slack_user_id, username from tbl_users"
     username_by_slack_user_id = { slack_user_id: username for (slack_user_id, username) in do_select(query) }
     for word in text.split():
@@ -157,8 +157,19 @@ def format_user_mentions_and_emojis(text):
                     text = text.replace(word, "@" + username_by_slack_user_id[slack_user_id])
                 else:
                     text = text.replace(word, "@" + slack_user_id)
+    return text
+
+
+def format_emojis(text):
+    query = "select emoji_trigger, url from tbl_emojis"
+    url_by_emoji_trigger = { emoji_trigger: url for (emoji_trigger, url) in do_select(query) }
+    for word in text.split():
         if word.startswith(":") and word.endswith(":"):
             emoji_trigger = word[1:-1]
+            emoji_text = url_by_emoji_trigger.get(emoji_trigger)
+            if emoji_text is not None:
+                text = text.replace(word, f"<img height='22px' width='22px' src='{emoji_text}' />")
+                continue
             emoji_text = emoji.emojize(emoji_trigger, use_aliases=True)
             if emoji_text != emoji_trigger:
                 text = text.replace(word, emoji_text)
@@ -187,7 +198,8 @@ def package_messages(messages, q):
     records = []
     for message in messages:
         text = message[5]
-        text = format_user_mentions_and_emojis(text)
+        text = format_user_mentions(text)
+        text = format_emojis(text)
         text = format_links(text)
         text = format_pre(text, '```')
         text = format_pre(text, '`', tagclass="inline")
@@ -228,9 +240,16 @@ def package_messages(messages, q):
             record['avatar_url'] = message[11]
         else:
             record['avatar_url'] = "https://cdn1.iconfinder.com/data/icons/the-basics/100/link-broken-chain-512.png"
+
+        record['reactions'] = get_message_reactions(message[6])
         records.append(record)
     return records
 
+
+def get_message_reactions(message_id=None):
+    query = 'select e.emoji_trigger, e.url, u.username from tbl_reactions r join tbl_emojis e on ' + \
+            'r.emoji_id = e.id join tbl_users u on r.user_id = u.id where r.message_id = %s'
+    return do_select(query, (message_id))
 
 def query_context_messages(channel_id, timestamp, direction, comparison, limit, offset):
     query = "select m.team_id, m.channel_id, t.team_name, u.username, m.timestamp, m.text, m.id, " + \
@@ -238,7 +257,6 @@ def query_context_messages(channel_id, timestamp, direction, comparison, limit, 
             "tbl_messages m join tbl_users u on u.id = m.user_id join tbl_channels c on c.id = m.channel_id " + \
             "join tbl_teams t on t.id = m.team_id where m.channel_id = %s and timestamp " + comparison + \
             " %s order by timestamp " + direction + " limit " + str(abs(offset)) + ", " + str(limit)
-    print(query)
     return do_select(query, (channel_id, timestamp))
 
 
@@ -376,7 +394,7 @@ def context(message_id, q=None):
         channel_id = messages[0][1]
         timestamp = messages[0][2]
         datetime_string = datetime.fromtimestamp(timestamp).strftime('%I:%M %p %Y-%m-%d (%a)')
-        summary = f"{messages[0][4]} ({datetime_string}): {messages[0][3]}"
+        summary = f"{messages[0][4]} ({datetime_string}): {messages[0][3]}".replace('"', "&quot;")
         window_size = 20
         try:
             offset = int(offset)
