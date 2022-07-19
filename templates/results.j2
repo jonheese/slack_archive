@@ -1,6 +1,6 @@
 {% include 'header.j2' %}
         {% include 'search.j2' %}
-        {% if message_range and total_count -%}
+        {% if message_range and total_count != None -%}
         <table align='center' width='85%' border='0' cellpadding='10'>
             <tr>
                 <td>Showing {{ message_range }} of {{ total_count }} results</td>
