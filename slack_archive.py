@@ -211,9 +211,15 @@ def package_messages(messages, q):
         text = format_simple_tag(text, '*', 'b')
         text = text.replace('\n', '<br />')
         if q and q not in reserved_words:
-            #q_pattern = re.compile(f" {q}", re.IGNORECASE)
-            #text = q_pattern.sub(f" <b>{q}</b>", text)
-            text = text.replace(q, f"<b>{q}</b>")
+            boldify = True
+            for reserved_word in reserved_words:
+                if reserved_word in text:
+                    boldify = False
+                    break
+            if boldify:
+                #q_pattern = re.compile(f" {q}", re.IGNORECASE)
+                #text = q_pattern.sub(f" <b>{q}</b>", text)
+                text = text.replace(q, f"<b>{q}</b>")
         record = {
             "team_id": message[0],
             "channel_id": message[1],
