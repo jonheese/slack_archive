@@ -21,6 +21,7 @@ reserved_words = [
     "pre",
     "a",
     "href",
+    "img",
 ]
 
 
@@ -183,7 +184,7 @@ def format_emojis(text):
     return text
 
 
-def format_links(text):
+def format_links(text, is_image):
     for word in text.split():
         if "<" in word and ">" in word:
             start_index = word.index("<")
@@ -191,6 +192,8 @@ def format_links(text):
             if end_index > start_index:
                 url = word[start_index + 1:end_index - start_index].split("|")[0]
                 text = text.replace(word, f"<a href='{url}'>{url}</a>")
+                if is_image:
+                    text += f"<br /><img src='{url}' />"
     return text
 
 
@@ -207,7 +210,10 @@ def package_messages(messages, q):
         text = message[5]
         text = format_user_mentions(text)
         text = format_emojis(text)
-        text = format_links(text)
+        if len(message) >= 14:
+            text = format_links(text, message[13])
+        else:
+            text = format_links(text, False)
         text = format_pre(text, '```')
         text = format_pre(text, '`', tagclass="inline")
         if text.startswith("&gt;&gt;&gt;") or "\n&gt;&gt;&gt;" in text:
@@ -240,11 +246,14 @@ def package_messages(messages, q):
             "id": message[6],
             "channel_name": message[7],
             "full_name": message[10],
+            "is_image": None,
             "files": get_files(message[6]),
             "archive_url": None,
         }
         if len(message) >= 13:
             record["archive_url"] = message[12]
+        if len(message) >= 14:
+            record["is_image"] = message[13]
         if not record["channel_name"]:
             record["channel_name"] = f"Unknown ({message[8]})"
         if not record["username"]:
@@ -268,7 +277,7 @@ def get_message_reactions(message_id=None):
 
 def query_context_messages(channel_id, timestamp, direction, comparison, limit, offset):
     query = "select m.team_id, m.channel_id, t.team_name, u.username, m.timestamp, m.text, m.id, " + \
-            "c.channel_name, c.slack_channel_id, u.slack_user_id, u.full_name, u.avatar_url, m.archive_url from " + \
+            "c.channel_name, c.slack_channel_id, u.slack_user_id, u.full_name, u.avatar_url, m.archive_url, m.is_image from " + \
             "tbl_messages m join tbl_users u on u.id = m.user_id join tbl_channels c on c.id = m.channel_id " + \
             "join tbl_teams t on t.id = m.team_id where m.channel_id = %s and timestamp " + comparison + \
             " %s order by timestamp " + direction + " limit " + str(abs(offset)) + ", " + str(limit)
@@ -339,7 +348,7 @@ def search():
                 "join tbl_teams t on t.id = m.team_id " + where_clause
         total_count = int(do_select(count_query, tuple(where_values))[0][0])
         query = "select m.team_id, m.channel_id, t.team_name, u.username, m.timestamp, m.text, m.id, c.channel_name, " + \
-                "c.slack_channel_id, u.slack_user_id, u.full_name, u.avatar_url from " + \
+                "c.slack_channel_id, u.slack_user_id, u.full_name, u.avatar_url, m.is_image from " + \
                 "tbl_messages m join tbl_users u on u.id = m.user_id join tbl_channels c on c.id = m.channel_id " + \
                 "join tbl_teams t on t.id = m.team_id " + where_clause + " order by timestamp " + limit_clause
         messages = package_messages(do_select(query, tuple(where_values)), q)
