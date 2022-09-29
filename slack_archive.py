@@ -348,7 +348,7 @@ def search():
                 "join tbl_teams t on t.id = m.team_id " + where_clause
         total_count = int(do_select(count_query, tuple(where_values))[0][0])
         query = "select m.team_id, m.channel_id, t.team_name, u.username, m.timestamp, m.text, m.id, c.channel_name, " + \
-                "c.slack_channel_id, u.slack_user_id, u.full_name, u.avatar_url, m.is_image from " + \
+                "c.slack_channel_id, u.slack_user_id, u.full_name, u.avatar_url, m.archive_url, m.is_image from " + \
                 "tbl_messages m join tbl_users u on u.id = m.user_id join tbl_channels c on c.id = m.channel_id " + \
                 "join tbl_teams t on t.id = m.team_id " + where_clause + " order by timestamp " + limit_clause
         messages = package_messages(do_select(query, tuple(where_values)), q)
