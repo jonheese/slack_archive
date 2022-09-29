@@ -136,6 +136,13 @@ def format_line_blockquote(text):
     return out_text
 
 
+def format_spoilers(text):
+    spoiler_text = ":".join(text.split(':')[1:])
+    if spoiler_text.startswith(" "):
+        return text.replace(spoiler_text, f' <span class="spoiler">{"".join(spoiler_text[1:])}</span>')
+    return text.replace(spoiler_text, f'<span class="spoiler">{spoiler_text}</span>')
+
+
 def format_full_blockquote(text):
     split_text = text.split("&gt;&gt;&gt;")
     header = split_text[0]
@@ -210,6 +217,8 @@ def package_messages(messages, q):
         text = format_simple_tag(text, '_', 'i')
         text = format_simple_tag(text, '*', 'b')
         text = text.replace('\n', '<br />')
+        if message[3] == 'spoiler_alert':
+            text = format_spoilers(text)
         if q and q not in reserved_words:
             boldify = True
             for reserved_word in reserved_words:
