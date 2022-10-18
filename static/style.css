@@ -120,5 +120,3 @@ tr:hover .hidden {
 .spoiler, .spoiler > * { transition: all 0.5s }
 .spoiler:not(:hover) { color: transparent ; background-color: gray }
 .spoiler:not(:hover) > * { opacity: 0 }
-/* fix weird transitions on Chrome: */
-blockquote, blockquote > *:not(a) { color: black }
