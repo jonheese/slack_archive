@@ -298,6 +298,7 @@ def search():
     start_date = request.args.get("start_date", "")
     end_date = request.args.get("end_date", "")
     sql_match = request.args.get("sql_match", False)
+    case_sensitive = request.args.get("case_sensitive", False)
     page = int(request.args.get("page", 1))
     results_per_page = int(request.args.get("rpp", 20))
     offset = results_per_page * (page - 1)
@@ -336,6 +337,8 @@ def search():
         if q:
             if sql_match:
                 where_columns.append(" match(m.text) AGAINST('%s') ")
+            elif case_sensitive:
+                where_columns.append(" BINARY m.text LIKE '%%%s%%' ")
             else:
                 where_columns.append(" m.text LIKE '%%%s%%' ")
             where_values.append(q)
@@ -379,6 +382,7 @@ def search():
                                start_date=start_date,
                                end_date=end_date,
                                sql_match=sql_match,
+                               case_sensitive=case_sensitive,
                                show_prev=show_prev,
                                show_next=show_next,
                                prev_page_url=prev_page_url,
@@ -405,11 +409,8 @@ def context(message_id, q=None):
         team_name = request.form.get("team_name", request.args.get("team_name", ""))
         start_date = request.form.get("start_date", request.args.get("start_date", ""))
         end_date = request.form.get("end_date", request.args.get("end_date", ""))
-        sql_match = request.form.get("sql_match", request.args.get("sql_match", False))
-        if sql_match == "True":
-            sql_match = True
-        else:
-            sql_match = False
+        sql_match = request.form.get("sql_match", request.args.get("sql_match", False)) == "True"
+        case_sensitive = request.form.get("case_sensitive", request.args.get("case_sensitive", False)) == "True"
 
         query = "select m.team_id, m.channel_id, m.timestamp, m.text, u.full_name from " + \
                 "tbl_messages m join tbl_users u on u.id = m.user_id where m.id = %s"
@@ -476,6 +477,7 @@ def context(message_id, q=None):
             team_name=team_name,
             channel_name=channel_name,
             sql_match=sql_match,
+            case_sensitive=case_sensitive,
             start_date=start_date,
             end_date=end_date,
         )
@@ -492,6 +494,7 @@ def context(message_id, q=None):
             channel_name=channel_name,
             team_name=team_name,
             sql_match=sql_match,
+            case_sensitive=case_sensitive,
             start_date=start_date,
             end_date=end_date,
         )

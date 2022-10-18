@@ -6,7 +6,9 @@
                     <tr>
                         <td width='90px'>Message text:</td>
                         <td width='*'><input size='100' id='q' name='q' value="{{ q }}"></td>
-                        <td align='right'><input type='checkbox' id='sql_match' name='sql_match' {% if sql_match -%} checked {% endif -%} ></td>
+                        <td align='right'><input type='checkbox' id='case_sensitive' name='case_sensitive' {% if case_sensitive -%} checked {% endif -%} onchange="document.getElementById('sql_match').disabled = this.checked;" /></td>
+                        <td align='left'>Case-Sensitive</td>
+                        <td align='right'><input type='checkbox' id='sql_match' name='sql_match' {% if sql_match -%} checked {% endif -%} onchange="document.getElementById('case_sensitive').disabled = this.checked;" /></td>
                         <td align='left'>Natural Language Query</td>
                     </tr>
                     <tr>
