@@ -198,10 +198,9 @@ def format_links(text, is_image):
 
 
 def format_simple_tag(text, delimiter, tag):
-    for word in text.split():
-        if word.startswith(delimiter) and word.endswith(delimiter):
-            text = text.replace(word, f'<{tag}>{word[1:-1]}</{tag}>')
-    return text
+    if delimiter == "*":
+        delimiter = "\*"
+    return re.sub(f'{delimiter}(.*?){delimiter}', f'<{tag}>\\1</{tag}>', text)
 
 
 def package_messages(messages, q):
