@@ -63,7 +63,8 @@ def get_db_conn():
 def do_select(query, args=()):
     conn = get_db_conn()
     cursor = conn.cursor()
-    cursor.execute(query % args)
+    print(f'Query: {query % args}')
+    cursor.execute(query, args)
     results = cursor.fetchall()
     cursor.close()
     return results
@@ -71,7 +72,12 @@ def do_select(query, args=()):
 
 def get_files(message_id):
     files = []
-    file_records = do_select("select name, mimetype, thumb_80, thumb_800, permalink, permalink_public from tbl_files where message_id = %s", (message_id))
+    file_records = do_select(
+        "select name, mimetype, thumb_80, thumb_800, permalink, permalink_public from tbl_files where message_id = %(message_id)s",
+        {
+            'message_id': message_id
+        }
+    )
     for file_record in file_records:
         file = {
             "name": file_record[0],
@@ -271,16 +277,27 @@ def package_messages(messages, q):
 
 def get_message_reactions(message_id=None):
     query = 'select e.emoji_trigger, e.url, u.username from tbl_reactions r join tbl_emojis e on ' + \
-            'r.emoji_id = e.id join tbl_users u on r.user_id = u.id where r.message_id = %s'
-    return do_select(query, (message_id))
+            'r.emoji_id = e.id join tbl_users u on r.user_id = u.id where r.message_id = %(message_id)s'
+    return do_select(
+        query,
+        {
+            'message_id': message_id
+        }
+    )
 
 def query_context_messages(channel_id, timestamp, direction, comparison, limit, offset):
     query = "select m.team_id, m.channel_id, t.team_name, u.username, m.timestamp, m.text, m.id, " + \
             "c.channel_name, c.slack_channel_id, u.slack_user_id, u.full_name, u.avatar_url, m.archive_url, m.is_image from " + \
             "tbl_messages m join tbl_users u on u.id = m.user_id join tbl_channels c on c.id = m.channel_id " + \
-            "join tbl_teams t on t.id = m.team_id where m.channel_id = %s and timestamp " + comparison + \
-            " %s order by timestamp " + direction + " limit " + str(abs(offset)) + ", " + str(limit)
-    return do_select(query, (channel_id, timestamp))
+            "join tbl_teams t on t.id = m.team_id where m.channel_id = %(channel_id)s and timestamp " + comparison + \
+            " %(timestamp)s order by timestamp " + direction + " limit " + str(abs(offset)) + ", " + str(limit)
+    return do_select(
+        query,
+        {
+            'channel_id': channel_id,
+            'timestamp': timestamp
+        }
+    )
 
 
 @app.route('/favicon.ico', methods=['GET'])
@@ -291,11 +308,12 @@ def get_favicon():
 @app.route('/', methods=['GET'])
 def search():
     q = request.args.get("q", "")
-    username = request.args.get("username", "")
-    team_name = request.args.get("team_name", "")
-    channel_name = request.args.get("channel_name", "")
-    start_date = request.args.get("start_date", "")
-    end_date = request.args.get("end_date", "")
+    print(q)
+    username = request.args.get("username", "").replace("'", "\'")
+    team_name = request.args.get("team_name", "").replace("'", "\'")
+    channel_name = request.args.get("channel_name", "").replace("'", "\'")
+    start_date = request.args.get("start_date", "").replace("'", "\'")
+    end_date = request.args.get("end_date", "").replace("'", "\'")
     sql_match = request.args.get("sql_match", False)
     case_sensitive = request.args.get("case_sensitive", False)
     page = int(request.args.get("page", 1))
@@ -348,7 +366,12 @@ def search():
         count_query = "select count(m.id) from " + \
                 "tbl_messages m join tbl_users u on u.id = m.user_id join tbl_channels c on c.id = m.channel_id " + \
                 "join tbl_teams t on t.id = m.team_id " + where_clause
-        total_count = int(do_select(count_query, tuple(where_values))[0][0])
+        total_count = int(
+            do_select(
+                count_query,
+                tuple(where_values)
+            )[0][0]
+        )
         query = "select m.team_id, m.channel_id, t.team_name, u.username, m.timestamp, m.text, m.id, c.channel_name, " + \
                 "c.slack_channel_id, u.slack_user_id, u.full_name, u.avatar_url, m.archive_url, m.is_image from " + \
                 "tbl_messages m join tbl_users u on u.id = m.user_id join tbl_channels c on c.id = m.channel_id " + \
@@ -392,7 +415,7 @@ def search():
                                param_string=param_string,
                                messages=messages)
     except Error as e:
-        return render_template("results.j2", q=f"Exception encountered: {e}")
+        return render_template("results.j2")
 
 
 @app.route('/context/<message_id>/', methods=['GET', 'POST'])
