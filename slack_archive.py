@@ -64,7 +64,7 @@ def do_select(query, args=()):
     conn = get_db_conn()
     cursor = conn.cursor()
     print(f'Query: {query % args}')
-    cursor.execute(query, args)
+    cursor.execute(query % args)
     results = cursor.fetchall()
     cursor.close()
     return results
@@ -184,7 +184,7 @@ def format_emojis(text):
             if emoji_text is not None:
                 text = text.replace(word, f"<img height='22px' width='22px' src='{emoji_text}' />")
                 continue
-            emoji_text = emoji.emojize(emoji_trigger, use_aliases=True)
+            emoji_text = emoji.emojize(emoji_trigger, language="alias")
             if emoji_text != emoji_trigger:
                 text = text.replace(word, emoji_text)
     return text
@@ -205,7 +205,7 @@ def format_links(text, is_image):
 
 def format_simple_tag(text, delimiter, tag):
     if delimiter == "*":
-        delimiter = "\*"
+        delimiter = r"\*"
     return re.sub(f'{delimiter}(.*?){delimiter}', f'<{tag}>\\1</{tag}>', text)
 
 

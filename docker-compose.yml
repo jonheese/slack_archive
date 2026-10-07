@@ -1,0 +1,20 @@
+version: '3.7'
+
+services:
+  slack-archive:
+    container_name: slack-archive
+    build: .
+    image: jonheese/slack-archive:latest
+    volumes:
+      - type: bind
+        source: ./config.py
+        target: /usr/src/app/config.py
+      - type: bind
+        source: ./static
+        target: /usr/src/app/static
+      - type: bind
+        source: ./templates
+        target: /usr/src/app/templates
+    ports:
+      - "5001:5001"
+    restart: always
