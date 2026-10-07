@@ -415,6 +415,7 @@ def search():
                                param_string=param_string,
                                messages=messages)
     except Error as e:
+        print("Error: %s" % e)
         return render_template("results.j2")
 
 
