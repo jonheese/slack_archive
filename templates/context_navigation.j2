@@ -1,0 +1,11 @@
+{% from 'forms.j2' import context_button with context %}
+<table align='center' width='85%' border='0' cellpadding='10'>
+    <tr>
+        <td width='115px'><b>Team:</b> {{ messages[0]["team_name"] }}</td>
+        <td align='left'><b>Channel:</b> {{ messages[0]["channel_name"] }}</td>
+        <td width='80px' align='right'>{{ context_button(prev20_url, '<< Back 20') }}</td>
+        <td width='80px' align='right'>{{ context_button(prev_url, '< Back 1') }}</td>
+        <td width='80px' align='right'>{{ context_button(next_url, 'Forward 1 >') }}</td>
+        <td width='80px' align='right'>{{ context_button(next20_url, 'Forward 20 >>') }}</td>
+    </tr>
+</table>

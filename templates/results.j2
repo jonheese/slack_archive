@@ -1,3 +1,4 @@
+{% from 'forms.j2' import search_fields with context %}
 {% include 'header.j2' %}
         {% include 'search.j2' %}
         {% for error in errors|default([]) %}<p>{{ error }}</p>{% endfor %}
@@ -31,14 +32,7 @@
                 <td>{{ message["time"] }}</td>
                 <td class='wrappable'>{{ message["text"] }}</td>
                 <td><form method='post' action='/context/{{ message["id"] }}' class='inline'>
-                     <input type='hidden' name='q' value='{{ q }}'>
-                     <input type='hidden' name='username' value='{{ username }}'>
-                     <input type='hidden' name='channel_name' value='{{ channel_name }}'>
-                     <input type='hidden' name='team_name' value='{{ team_name }}'>
-                     <input type='hidden' name='start_date' value='{{ start_date }}'>
-                     <input type='hidden' name='end_date' value='{{ end_date }}'>
-                     <input type='hidden' name='exact_text' value='{{ exact_text }}'>
-                     <input type='hidden' name='case_sensitive' value='{{ case_sensitive }}'>
+                     {{ search_fields() }}
                      <button type="submit" name="see_in_context" value="see_in_context" class="link-button">
                         See in context
                      </button>

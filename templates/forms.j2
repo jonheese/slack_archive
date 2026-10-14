@@ -1,0 +1,17 @@
+{% macro search_fields() -%}
+    <input type='hidden' name='q' value='{{ q }}'>
+    <input type='hidden' name='username' value='{{ username }}'>
+    <input type='hidden' name='channel_name' value='{{ channel_name }}'>
+    <input type='hidden' name='team_name' value='{{ team_name }}'>
+    <input type='hidden' name='start_date' value='{{ start_date }}'>
+    <input type='hidden' name='end_date' value='{{ end_date }}'>
+    <input type='hidden' name='exact_text' value='{{ exact_text }}'>
+    <input type='hidden' name='case_sensitive' value='{{ case_sensitive }}'>
+{%- endmacro %}
+
+{% macro context_button(action, label) -%}
+    <form method='post' action='{{ action }}' class='inline'>
+        {{ search_fields() }}
+        <button type="submit" name="see_in_context" value="see_in_context" class="link-button">{{ label }}</button>
+    </form>
+{%- endmacro %}
