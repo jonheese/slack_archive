@@ -57,7 +57,7 @@ def test_empty_search_does_not_connect(app, monkeypatch):
 
 def test_parameters_and_exclusion(app):
     with app.app_context():
-        options = queries.filters(dict(q="it's 100%_!", exact_text='on', team_name='-friends'))
+        options = queries.parse_filters(dict(q="it's 100%_!", exact_text='on', team_name='-friends'))
         sql, params = queries.where_clause(options)
         assert "it's" not in sql
         assert params == ('%friends%', "%it's 100!%!_!!%")
@@ -71,11 +71,11 @@ def test_fulltext_input_cannot_inject_boolean_operators():
 
 
 def test_case_and_legacy_flags():
-    assert not queries.filters({})['exact_text']
-    assert queries.filters({'case_sensitive': 'on'})['exact_text']
-    assert not queries.filters({'sql_match': 'True'})['exact_text']
-    assert queries.filters({'sql_match': 'False'})['exact_text']
-    assert not queries.filters({'exact_text': 'False', 'sql_match': 'False'})['exact_text']
+    assert not queries.parse_filters({})['exact_text']
+    assert queries.parse_filters({'case_sensitive': 'on'})['exact_text']
+    assert not queries.parse_filters({'sql_match': 'True'})['exact_text']
+    assert queries.parse_filters({'sql_match': 'False'})['exact_text']
+    assert not queries.parse_filters({'exact_text': 'False', 'sql_match': 'False'})['exact_text']
 
 
 @pytest.mark.parametrize('url', ['/?page=bad', '/?page=0', '/?rpp=0', '/?rpp=201', '/?start_date=nope', '/context/not-an-id/', '/context/1/?offset=nope'])
@@ -170,7 +170,7 @@ def test_team_scoped_lookups(app, monkeypatch):
         return []
     monkeypatch.setattr(db, 'select', select)
     with app.app_context():
-        records = messages.package([row(text='<@U1>'), row(2, team_id=2, text='<@U1>')])
+        records = messages.prepare_messages([row(text='<@U1>'), row(2, team_id=2, text='<@U1>')])
     assert [str(item['text']) for item in records] == ['@user1', '@user2']
 
 
@@ -217,7 +217,7 @@ def test_enrichment_attaches_multiple_files_and_reactions(app, monkeypatch):
         return []
     monkeypatch.setattr(db, 'select', select)
     with app.app_context():
-        found = messages.package([row(), row(2, text=None)], details=True)
+        found = messages.prepare_messages([row(), row(2, text=None)], include_details=True)
     assert len(found) == 2
     assert len(found[0]['files']) == 1
     assert len(found[0]['reactions']) == 2
@@ -228,7 +228,7 @@ def test_enrichment_attaches_multiple_files_and_reactions(app, monkeypatch):
 
 def test_exclusive_dates_use_display_timezone(app):
     with app.app_context():
-        sql, params = queries.where_clause(queries.filters(dict(start_date='2024-01-01', end_date='2024-01-02')))
+        sql, params = queries.where_clause(queries.parse_filters(dict(start_date='2024-01-01', end_date='2024-01-02')))
     assert 'm.timestamp > %s' in sql and 'm.timestamp < %s' in sql
     assert params == (1704085200, 1704171600)
 
@@ -252,7 +252,7 @@ def test_late_enrichment_failure_returns_503(app, monkeypatch):
 def test_literal_index_hint_is_scoped_to_measured_search(app, monkeypatch, extra):
     calls = fake_select(monkeypatch, [row()])
     with app.app_context():
-        queries.search(queries.filters(dict(q='test', exact_text='on', **extra)), 2, 20)
+        queries.search(queries.parse_filters(dict(q='test', exact_text='on', **extra)), 2, 20)
     assert len(calls) == 2
     for sql, params in calls:
         assert ('IGNORE INDEX (team_id)' in sql) == (not extra)
@@ -263,5 +263,5 @@ def test_literal_index_hint_is_scoped_to_measured_search(app, monkeypatch, extra
 def test_fulltext_keeps_optimizer_choices(app, monkeypatch):
     calls = fake_select(monkeypatch, [row()])
     with app.app_context():
-        queries.search(queries.filters({'q': 'test'}), 1, 20)
+        queries.search(queries.parse_filters({'q': 'test'}), 1, 20)
     assert all('IGNORE INDEX' not in sql for sql, _ in calls)

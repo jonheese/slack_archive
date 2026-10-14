@@ -158,3 +158,20 @@ and no user/team/channel/date filters. Full-text, case-sensitive, filtered, and
 context queries are unchanged. These are individual diagnostic timings, not an
 end-to-end guarantee; different terms, offsets, cache states, and host load may
 perform differently. The index remains available for all other queries.
+
+## Finding your way around the code
+
+- `slack_archive.py` is the WSGI entry point; `archive/__init__.py` creates Flask.
+- `archive/views.py` handles request inputs, pagination/navigation and responses.
+- `archive/queries.py` builds bound SQL and selects search/context messages.
+- `archive/db.py` owns the request connection, execution, cleanup and query timings.
+- `archive/messages.py` loads related data in batches and builds display records.
+- `archive/formatting.py` renders Slack text. `MessageRenderer` keeps lookups and
+  highlighting options together, with separate methods for each formatting rule.
+- `templates/forms.j2` owns shared form fields/buttons; `context_navigation.j2`
+  renders the navigation bar included above and below the context messages.
+
+For a formatting change, start with the relevant renderer method. For attachment
+URL selection, start with `build_attachment()`. For SQL performance, start with
+`search()` or `context()` in `queries.py`. Keep database calls outside the loop
+that builds individual display messages.

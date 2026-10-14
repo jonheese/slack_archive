@@ -1,110 +1,168 @@
-"""Render Slack's stored text without treating messages as trusted HTML."""
+"""Render stored Slack text; only generated, escaped HTML is trusted."""
+
 import html
 import re
 from urllib.parse import urlsplit
+
 import emoji
 from markupsafe import Markup, escape
 
-TOKEN = re.compile(r'```[\s\S]*?```|`[^`\n]+`|<[^>\n]+>|:[A-Za-z0-9_+\-]+:')
-BROKEN_IMAGE = 'https://cdn1.iconfinder.com/data/icons/the-basics/100/link-broken-chain-512.png'
+SLACK_TOKEN = re.compile(r"```[\s\S]*?```|`[^`\n]+`|<[^>\n]+>|:[A-Za-z0-9_+\-]+:")
+CODE_BLOCK = re.compile(r"(```[\s\S]*?```)")
+EMPHASIS = re.compile(r"(\*[^*\n]+\*|_[^_\n]+_)")
+BROKEN_IMAGE = (
+    "https://cdn1.iconfinder.com/data/icons/the-basics/100/link-broken-chain-512.png"
+)
+LINK_SCHEMES = {"http", "https", "mailto"}
+IMAGE_SCHEMES = {"http", "https"}
 
 
 def safe_url(value, image=False):
-    value = html.unescape(str(value or '')).strip()
+    value = html.unescape(str(value or "")).strip()
     if any(ord(char) < 32 for char in value):
-        return ''
+        return ""
     try:
         scheme = urlsplit(value).scheme.lower()
     except ValueError:
-        return ''
-    if scheme in (('http', 'https') if image else ('http', 'https', 'mailto')):
-        return value
-    return ''
+        return ""
+    allowed_schemes = IMAGE_SCHEMES if image else LINK_SCHEMES
+    return value if scheme in allowed_schemes else ""
 
 
-def plain(text, query):
-    # Emphasis only operates on text, never on generated attributes or code.
-    parts = re.split(r'(\*[^*\n]+\*|_[^_\n]+_)', text)
-    output = []
-    for part in parts:
-        tag = None
-        if len(part) > 2 and part[0] == part[-1] and part[0] in '*_':
-            tag = 'b' if part[0] == '*' else 'i'
-            part = part[1:-1]
+def first_safe_url(candidates, *, image=False):
+    """Choose the first usable URL, validating each candidate just once."""
+    for candidate in candidates:
+        url = safe_url(candidate, image=image)
+        if url:
+            return url
+    return BROKEN_IMAGE
+
+
+class MessageRenderer:
+    """Keep one message's lookups/options together while rendering its parts."""
+
+    def __init__(self, users, emojis, *, query="", is_image=False, spoiler=False):
+        self.users = users
+        self.emojis = emojis
+        self.is_image = is_image
+        self.spoiler = spoiler
+        self.highlight_pattern = None
         if query:
-            pieces = re.split('(' + re.escape(query) + ')', part, flags=re.IGNORECASE)
-            rendered = ''.join(f'<b>{escape(piece)}</b>' if i % 2 else str(escape(piece)) for i, piece in enumerate(pieces))
-        else:
-            rendered = str(escape(part))
-        output.append(f'<{tag}>{rendered}</{tag}>' if tag else rendered)
-    return ''.join(output)
+            self.highlight_pattern = re.compile(
+                "(" + re.escape(query) + ")", re.IGNORECASE
+            )
 
+    def highlight_text(self, text):
+        if self.highlight_pattern is None:
+            return str(escape(text))
+        output = []
+        for index, part in enumerate(self.highlight_pattern.split(text)):
+            escaped = str(escape(part))
+            output.append(f"<b>{escaped}</b>" if index % 2 else escaped)
+        return "".join(output)
 
-def render_text(text, users, emojis, query='', is_image=False, spoiler=False):
-    text = html.unescape(text or '')
+    def render_plain_text(self, text):
+        # Emphasis/highlighting never touch generated attributes or code.
+        output = []
+        for part in EMPHASIS.split(text):
+            tag = None
+            if len(part) > 2 and part[0] == part[-1] and part[0] in "*_":
+                tag = "b" if part[0] == "*" else "i"
+                part = part[1:-1]
+            rendered = self.highlight_text(part)
+            output.append(f"<{tag}>{rendered}</{tag}>" if tag else rendered)
+        return "".join(output)
 
-    def inline(value):
-        output, pos = [], 0
-        for match in TOKEN.finditer(value):
-            output.append(plain(value[pos:match.start()], query))
-            token = match.group()
-            if token.startswith('```'):
-                output.append(f'<pre>{escape(token[3:-3].strip())}</pre>')
-            elif token.startswith('`'):
-                output.append(f'<pre class="inline">{escape(token[1:-1].strip())}</pre>')
-            elif token.startswith('<@'):
-                user_id = token[2:-1].split('|', 1)[0]
-                output.append(str(escape('@' + (users.get(user_id) or user_id))))
-            elif token.startswith('<'):
-                target, _, label = token[1:-1].partition('|')
-                url = safe_url(target)
-                if url:
-                    output.append(f'<a href="{escape(url)}">{escape(label or target)}</a>')
-                    if is_image and safe_url(url, image=True):
-                        output.append(f'<br /><img src="{escape(url)}" />')
-                else:
-                    output.append(str(escape(token)))
-            else:
-                url = safe_url(emojis.get(token[1:-1]), image=True)
-                output.append(f'<img height="22px" width="22px" src="{escape(url)}" />' if url
-                              else str(escape(emoji.emojize(token, language='alias'))))
-            pos = match.end()
-        output.append(plain(value[pos:], query))
-        return ''.join(output)
+    def render_mention(self, token):
+        user_id = token[2:-1].split("|", 1)[0]
+        username = self.users.get(user_id) or user_id
+        return str(escape("@" + username))
 
-    # Protect multiline code before handling line-based blockquotes.
-    blocks = re.split(r'(```[\s\S]*?```)', text)
-    output = []
-    for block in blocks:
-        if block.startswith('```') and block.endswith('```'):
-            output.append(inline(block))
-            continue
-        quote = False
-        full_quote = False
-        lines = []
-        for line in block.split('\n'):
-            if line.startswith('>>>'):
-                if not quote:
-                    lines.append('<blockquote>')
-                quote = full_quote = True
+    def render_link(self, token):
+        target, _, label = token[1:-1].partition("|")
+        url = safe_url(target)
+        if not url:
+            return str(escape(token))
+        rendered = f'<a href="{escape(url)}">{escape(label or target)}</a>'
+        if self.is_image and safe_url(url, image=True):
+            rendered += f'<br /><img src="{escape(url)}" />'
+        return rendered
+
+    def render_emoji(self, token):
+        url = safe_url(self.emojis.get(token[1:-1]), image=True)
+        if url:
+            return f'<img height="22px" width="22px" src="{escape(url)}" />'
+        return str(escape(emoji.emojize(token, language="alias")))
+
+    def render_token(self, token):
+        if token.startswith("```"):
+            return f"<pre>{escape(token[3:-3].strip())}</pre>"
+        if token.startswith("`"):
+            return f'<pre class="inline">{escape(token[1:-1].strip())}</pre>'
+        if token.startswith("<@"):
+            return self.render_mention(token)
+        if token.startswith("<"):
+            return self.render_link(token)
+        return self.render_emoji(token)
+
+    def render_inline(self, text):
+        output = []
+        position = 0
+        for match in SLACK_TOKEN.finditer(text):
+            output.append(self.render_plain_text(text[position : match.start()]))
+            output.append(self.render_token(match.group()))
+            position = match.end()
+        output.append(self.render_plain_text(text[position:]))
+        return "".join(output)
+
+    def render_line(self, line):
+        if self.spoiler and ":" in line:
+            prefix, content = line.split(":", 1)
+            return (
+                self.render_inline(prefix + ":")
+                + '<span class="spoiler">'
+                + self.render_inline(content)
+                + "</span>"
+            )
+        return self.render_inline(line)
+
+    def render_quoted_lines(self, text):
+        output = []
+        in_quote = False
+        quote_to_end = False
+        for line in text.split("\n"):
+            if line.startswith(">>>"):
+                if not in_quote:
+                    output.append("<blockquote>")
+                in_quote = quote_to_end = True
                 line = line[3:]
-            elif line.startswith('>') and not full_quote:
-                if not quote:
-                    lines.append('<blockquote>')
-                quote = True
+            elif line.startswith(">") and not quote_to_end:
+                if not in_quote:
+                    output.append("<blockquote>")
+                in_quote = True
                 line = line[1:]
-            elif quote and not full_quote:
-                lines.append('</blockquote>')
-                quote = False
-            if spoiler and ':' in line:
-                prefix, rest = line.split(':', 1)
-                lines.append(inline(prefix + ':') + '<span class="spoiler">' + inline(rest) + '</span>')
+            elif in_quote and not quote_to_end:
+                output.append("</blockquote>")
+                in_quote = False
+            output.extend((self.render_line(line), "<br />"))
+        output.pop()  # Remove the trailing line break, keeping breaks inside quotes.
+        if in_quote:
+            output.append("</blockquote>")
+        return "".join(output)
+
+    def render(self, text):
+        output = []
+        # Protect multiline code before interpreting line-based blockquotes.
+        for block in CODE_BLOCK.split(html.unescape(text or "")):
+            if block.startswith("```") and block.endswith("```"):
+                output.append(self.render_inline(block))
             else:
-                lines.append(inline(line))
-            lines.append('<br />')
-        if lines and lines[-1] == '<br />':
-            lines.pop()
-        if quote:
-            lines.append('</blockquote>')
-        output.append(''.join(lines))
-    return Markup(''.join(output))
+                output.append(self.render_quoted_lines(block))
+        return Markup("".join(output))
+
+
+def render_text(text, users, emojis, query="", is_image=False, spoiler=False):
+    renderer = MessageRenderer(
+        users, emojis, query=query, is_image=is_image, spoiler=spoiler
+    )
+    return renderer.render(text)
