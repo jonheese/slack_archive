@@ -244,3 +244,24 @@ def test_late_enrichment_failure_returns_503(app, monkeypatch):
     response = app.test_client().get('/?q=test')
     assert response.status_code == 503
     assert b'private database detail' not in response.data
+
+
+@pytest.mark.parametrize('extra', [{}, {'username': 'jon'}, {'team_name': 'team'},
+                                   {'channel_name': 'general'}, {'start_date': '2024-01-01'},
+                                   {'end_date': '2024-02-01'}, {'case_sensitive': 'on'}])
+def test_literal_index_hint_is_scoped_to_measured_search(app, monkeypatch, extra):
+    calls = fake_select(monkeypatch, [row()])
+    with app.app_context():
+        queries.search(queries.filters(dict(q='test', exact_text='on', **extra)), 2, 20)
+    assert len(calls) == 2
+    for sql, params in calls:
+        assert ('IGNORE INDEX (team_id)' in sql) == (not extra)
+        assert '%test%' in params
+    assert calls[1][1][-2:] == (20, 20)
+
+
+def test_fulltext_keeps_optimizer_choices(app, monkeypatch):
+    calls = fake_select(monkeypatch, [row()])
+    with app.app_context():
+        queries.search(queries.filters({'q': 'test'}), 1, 20)
+    assert all('IGNORE INDEX' not in sql for sql, _ in calls)

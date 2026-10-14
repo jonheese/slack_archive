@@ -146,3 +146,15 @@ can keep its current target. Rebuilding/replacing the container briefly interrup
 service. For rollback, check out the recorded prior commit in the production
 checkout and run `docker compose up -d --build` again. The added file index is
 compatible with both versions and does not need to be removed.
+
+## Measured substring-query adjustment
+
+On ajax, after refreshing table statistics, the unfiltered literal `test` count
+took ~7.07s using the `team_id` index. Ignoring that index changed the plan to a
+table scan and took ~3.46s, with the same 3,752 matches. The page query with the
+hint took ~3.25s. The application now uses `IGNORE INDEX (team_id)` for both
+queries only when there is message text, literal mode, no case-sensitive mode,
+and no user/team/channel/date filters. Full-text, case-sensitive, filtered, and
+context queries are unchanged. These are individual diagnostic timings, not an
+end-to-end guarantee; different terms, offsets, cache states, and host load may
+perform differently. The index remains available for all other queries.

@@ -83,10 +83,17 @@ def search(options, page, per_page):
     where, params = where_clause(options)
     if not where:
         return [], None
-    count = db.select('SELECT COUNT(*) AS total' + JOINS + where, params)[0]['total']
+    joins = JOINS
+    # Measured on ajax: a team-index walk is slower than a scan for
+    # unconstrained literal searches. Leave other search modes/plans alone.
+    if (options['q'] and options['exact_text'] and not options['case_sensitive']
+            and not any(options[key] for key in
+                        ('username', 'team_name', 'channel_name', 'start_date', 'end_date'))):
+        joins = JOINS.replace('FROM tbl_messages m', 'FROM tbl_messages m IGNORE INDEX (team_id)')
+    count = db.select('SELECT COUNT(*) AS total' + joins + where, params)[0]['total']
     if not count:
         return [], 0
-    rows = db.select(COLUMNS + JOINS + where + ' ORDER BY m.timestamp, m.id LIMIT %s OFFSET %s',
+    rows = db.select(COLUMNS + joins + where + ' ORDER BY m.timestamp, m.id LIMIT %s OFFSET %s',
                      params + (per_page, (page - 1) * per_page))
     return rows, count
 
