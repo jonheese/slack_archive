@@ -1,1 +1,1 @@
-web: FLASK_APP=slack_archive.py flask run --port=$PORT --host=0.0.0.0
+web: gunicorn --config gunicorn.conf.py --bind 0.0.0.0:${PORT:-5001} slack_archive:app

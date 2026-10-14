@@ -1,5 +1,6 @@
 {% include 'header.j2' %}
         {% include 'search.j2' %}
+        {% for error in errors|default([]) %}<p>{{ error }}</p>{% endfor %}
         {% if message_range and total_count != None -%}
         <table align='center' width='85%' border='0' cellpadding='10'>
             <tr>
@@ -36,7 +37,8 @@
                      <input type='hidden' name='team_name' value='{{ team_name }}'>
                      <input type='hidden' name='start_date' value='{{ start_date }}'>
                      <input type='hidden' name='end_date' value='{{ end_date }}'>
-                     <input type='hidden' name='sql_match' value='{{ sql_match }}'>
+                     <input type='hidden' name='exact_text' value='{{ exact_text }}'>
+                     <input type='hidden' name='case_sensitive' value='{{ case_sensitive }}'>
                      <button type="submit" name="see_in_context" value="see_in_context" class="link-button">
                         See in context
                      </button>

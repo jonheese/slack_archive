@@ -1,20 +1,11 @@
-FROM python:alpine
+FROM python:3.12-slim
 WORKDIR /usr/src/app
-RUN set -eux \
-    && apk add --no-cache --virtual .build-deps build-base \
-        libffi-dev gcc musl-dev python3-dev \
-        mariadb-dev mariadb-client tzdata \
-    && pip install --upgrade pip setuptools wheel \
-    && rm -rf /root/.cache/pip
-COPY ./requirements.txt /usr/src/app/requirements.txt
-RUN set -eux\
-    && pip install --root-user-action=ignore -r /usr/src/app/requirements.txt \
-    && rm -rf /root/.cache/pip
-COPY . /usr/src/app
-RUN rm -f /usr/src/app/config.py && rm -rf /usr/src/app/templates && rm -rf /usr/src/app/static
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV FLASK_APP /usr/src/app/slack_archive.py
-ENV TZ America/New_York
-ENV FLASK_DEBUG 1
-CMD ["python3", "-u", "/usr/local/bin/flask", "run", "--host", "0.0.0.0", "--port", "5001"]
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 TZ=America/New_York
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY archive ./archive
+COPY slack_archive.py gunicorn.conf.py ./
+COPY templates ./templates
+COPY static ./static
+EXPOSE 5001
+CMD ["gunicorn", "--config", "gunicorn.conf.py", "slack_archive:app"]

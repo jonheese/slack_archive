@@ -1,0 +1,10 @@
+# Standalone: do not combine with docker-compose.yml.
+services:
+  slack-archive-test:
+    build: .
+    image: slack-archive:test
+    volumes:
+      - ./config.py:/usr/src/app/config.py:ro
+    ports:
+      - "127.0.0.1:5002:5001"
+    restart: unless-stopped
